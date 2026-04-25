@@ -112,7 +112,7 @@ export class CreateCheckoutHandler {
     private readonly usersRepository: Repository<UserEntity>,
     @Inject(PAYMENT_SERVICE)
     private readonly paymentService: PaymentService,
-  ) { }
+  ) {}
 
   async handle(
     userId: string,
@@ -128,8 +128,8 @@ export class CreateCheckoutHandler {
     if (existingPayment) {
       const checkout = existingPayment.providerPaymentId
         ? await this.paymentService.getCheckoutByProviderPaymentId(
-          existingPayment.providerPaymentId,
-        )
+            existingPayment.providerPaymentId,
+          )
         : null;
       if (checkout === null) {
         throw PaymentsErrors.checkoutNotFound();
@@ -192,7 +192,7 @@ export class CreateCheckoutHandler {
 @Controller('payments')
 @ApiTags('Payments')
 export class CreateCheckoutEndpoint {
-  constructor(private readonly handler: CreateCheckoutHandler) { }
+  constructor(private readonly handler: CreateCheckoutHandler) {}
 
   @Post('checkout')
   @UseGuards(JwtAuthGuard)
