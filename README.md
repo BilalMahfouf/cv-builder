@@ -1,178 +1,123 @@
-# NestJS Auth Boilerplate
+# CV Management Platform
 
 ![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs&logoColor=white)
 ![TypeORM](https://img.shields.io/badge/TypeORM-0.3-262627?logo=typeorm&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)
 ![PNPM](https://img.shields.io/badge/PNPM-10-F69220?logo=pnpm&logoColor=white)
 
-A production-friendly NestJS template for teams who want to **skip setup work** and start building features immediately.
+A production-ready backend platform for managing user profiles and generating professional CVs with AI assistance.
 
-This project gives you a clean starter with:
-- JWT authentication (access token + refresh cookie)
-- User account flows (register, login, profile, password, email)
-- Payment checkout workflow with idempotency and provider abstraction
-- PostgreSQL + TypeORM migrations
-- Swagger docs, unit tests, and integration tests
+**Core Features:**
+- User authentication (register, login, profile management)
+- Payment processing with idempotency
+- **[Upcoming]** AI-powered CV generation from user data (PDF export)
+- PostgreSQL + TypeORM with automated migrations
+- Comprehensive API documentation and test coverage
 
 ## Table of Contents
 
-- [Why This Template](#why-this-template)
-- [What Is Included](#what-is-included)
+- [Overview](#overview)
 - [High-Level System Design](#high-level-system-design)
-- [Request Flows](#request-flows)
-- [Folder Structure](#folder-structure)
+- [Core Modules](#core-modules)
 - [Quick Start](#quick-start)
 - [Environment Variables](#environment-variables)
-- [Database and Migrations](#database-and-migrations)
-- [Run and Test Commands](#run-and-test-commands)
-- [API Surface](#api-surface)
-- [Production Notes](#production-notes)
-- [Customization Guide](#customization-guide)
+- [Database Setup](#database-setup)
+- [Running Tests](#running-tests)
+- [API Documentation](#api-documentation)
+- [Project Structure](#project-structure)
+- [Contributing](#contributing)
+- [License](#license)
 
-## Why This Template
+## Overview
 
-Most projects waste time rebuilding the same backend foundation.
+This backend serves a career platform where users can:
+1. Create and manage their professional profiles
+2. Pay for CV generation services
+3. Generate professional CVs using AI (coming soon)
+4. Download CVs in PDF format
 
-This boilerplate is for developers who do **not** want to:
-- rewire auth from scratch
-- reconfigure TypeORM and migrations every time
-- rewrite request validation and API docs plumbing
-- start testing setup from zero
-
-Use it as a baseline and focus on product logic.
-
-## What Is Included
-
-- NestJS 11 modular architecture
-- PostgreSQL persistence layer with migration-first schema changes
-- Auth system:
-  - Register / Login / Refresh token / Logout
-  - Forget password / Reset password
-  - Me endpoint and protected user updates
-- Payments module:
-  - Checkout endpoint
-  - Idempotency key support
-  - Payment service abstraction (`PAYMENT_SERVICE`) with in-memory provider implementation
-- Swagger UI at `/api/docs`
-- Global validation pipeline (`class-validator`, `class-transformer`)
-- Testing:
-  - Unit tests
-  - Integration tests using ephemeral Postgres Docker container
+The API is RESTful, fully authenticated with JWT, and production-ready.
 
 ## High-Level System Design
 
-```mermaid
-flowchart LR
-    A[Client App] --> B[/api/v1 Controllers/]
-    B --> C[Feature Handlers]
-    C --> D[Domain Entities]
-    C --> E[TypeORM Repositories]
-    E --> F[(PostgreSQL)]
-
-    C --> G[Payment Service Port]
-    G --> H[InMemoryPaymentService]
-
-    B --> I[JwtAuthGuard + JwtStrategy]
-    I --> J[JWT Access Token]
-    C --> K[User Sessions Table]
-    K --> L[Refresh Token Cookie]
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Client Apps                           │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+                    /api/v1 endpoints
+                           │
+        ┌──────────────────┴──────────────────┬────────────────┐
+        │                                     │                │
+    ┌───▼──────┐                    ┌────────▼──────┐   ┌─────▼────┐
+    │ Auth     │                    │ Users Module  │   │ Payments │
+    │ Service  │                    │ (Profile)     │   │ Module   │
+    └───┬──────┘                    └────────┬──────┘   └─────┬────┘
+        │                                    │                │
+        └────────────────┬───────────────────┴────────────────┘
+                         │
+                   TypeORM Repositories
+                         │
+                    ┌────▼────┐
+                    │ PostgreSQL
+                    │ Database
+                    └─────────┘
+        
+        [Upcoming] CV Generation Module
+        ┌─────────────────────────┐
+        │ AI CV Generator         │
+        │ • Process user data     │
+        │ • Generate CV content   │
+        │ • Export to PDF         │
+        └─────────────────────────┘
 ```
 
-### Design Highlights
+### Architecture Highlights
 
-- API prefix is `/api/v1`.
-- Swagger docs are exposed at `/api/docs`.
-- Migrations auto-apply on app startup only when `NODE_ENV=development`.
-- Auth uses:
-  - Access token in `Authorization: Bearer <token>`
-  - Refresh token stored in DB and sent via secure HTTP-only cookie
-- Payments follow an idempotent create-checkout pattern (`idempotency-key` header).
+- **Modular design**: Auth, Users, Payments, and CV generation as independent modules
+- **API versioning**: All endpoints prefixed with `/api/v1`
+- **Authentication**: JWT access tokens + secure HTTP-only refresh cookies
+- **Idempotency**: Payment operations support `idempotency-key` header
+- **Database-first migrations**: Schema changes tracked and versioned
+- **Auto-migration**: Migrations apply on dev startup; manual control in production
 
-## Request Flows
+## Core Modules
 
-### 1) Register/Login + Session Creation
+### 1. Users Module
+Handles user registration, authentication, and profile management.
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant A as Auth Endpoint
-    participant U as Users Table
-    participant S as User Sessions Table
+**Endpoints:**
+- `POST /api/v1/auth/register` - Create new user account
+- `POST /api/v1/auth/login` - Authenticate user
+- `POST /api/v1/auth/refresh` - Get new access token
+- `POST /api/v1/auth/logout` - Invalidate session
+- `POST /api/v1/auth/forget-password` - Request password reset
+- `POST /api/v1/auth/reset-password` - Complete password reset
+- `GET /api/v1/auth/me` - Get authenticated user
+- `PATCH /api/v1/users/profile` - Update user profile
+- `PATCH /api/v1/users/email` - Change email
+- `PATCH /api/v1/users/password` - Change password
 
-    C->>A: POST /auth/register or /auth/login
-    A->>U: Validate user / credentials
-    A->>S: Store refresh session token
-    A-->>C: 201 + access token (body)
-    A-->>C: Set-Cookie refresh token (HttpOnly, Secure)
-```
+### 2. Payments Module
+Processes payments for CV generation services.
 
-### 2) Refresh Token Rotation
+**Endpoints:**
+- `POST /api/v1/payments/checkout` - Create payment checkout (supports idempotency)
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant A as Refresh Endpoint
-    participant S as User Sessions Table
+**Features:**
+- Idempotent operations via `idempotency-key` header
+- Payment service abstraction for easy provider integration
+- Transaction tracking and status management
 
-    C->>A: POST /auth/refresh-token (cookie attached)
-    A->>S: Validate refresh token + expiry
-    A->>S: Rotate refresh token
-    A-->>C: 201 + new access token
-    A-->>C: Set-Cookie rotated refresh token
-```
+### 3. CV Generation Module (Upcoming)
+AI-powered CV generation and management.
 
-### 3) Checkout Flow (Idempotent)
-
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant P as Payments Endpoint
-    participant DB as Payments Table
-    participant PS as PaymentService
-
-    C->>P: POST /payments/checkout + idempotency-key
-    P->>DB: Check existing idempotency key
-    alt existing record
-        DB-->>P: Existing payment
-        P-->>C: Return existing checkout response
-    else new request
-        P->>PS: process(amount, currency)
-        PS-->>P: providerPaymentId + checkoutUri
-        P->>DB: Save pending payment
-        P-->>C: 201 payment details + checkoutUri
-    end
-```
-
-## Folder Structure
-
-```text
-nestjs-auth-boilerplat/
-├─ backend/
-│  ├─ src/
-│  │  ├─ common/
-│  │  │  ├─ auth/                # JWT strategy, guard, current-user decorator
-│  │  │  ├─ domain/              # Base entity / domain-event primitives
-│  │  │  └─ swagger/             # Swagger setup + reusable API response decorators
-│  │  ├─ database/
-│  │  │  ├─ migrations/          # TypeORM SQL schema migrations
-│  │  │  ├─ create-database.ts   # Creates DB if missing
-│  │  │  └─ typeorm.config.ts    # Runtime + data source config
-│  │  ├─ modules/
-│  │  │  ├─ users/
-│  │  │  │  ├─ entities/
-│  │  │  │  └─ features/         # Auth and user profile use-cases
-│  │  │  └─ payments/
-│  │  │     ├─ entities/
-│  │  │     ├─ features/         # Checkout endpoint + handler
-│  │  │     └─ services/         # Payment service port + provider
-│  │  ├─ app.module.ts           # Root module wiring
-│  │  └─ main.ts                 # App bootstrap
-│  ├─ tests/
-│  │  ├─ unit-tests/
-│  │  └─ integration/            # Docker-backed Postgres integration tests
-│  └─ package.json
-└─ LICENSE
-```
+**Features (In Development):**
+- Extract user profile data
+- Generate professional CV content via AI prompt
+- Export CV as PDF
+- Store generated CVs for retrieval
+- Regenerate with custom prompts
 
 ## Quick Start
 
@@ -180,139 +125,144 @@ nestjs-auth-boilerplat/
 
 - Node.js LTS (20+ recommended)
 - pnpm 10+
-- PostgreSQL
-- Docker (optional, required for integration tests)
+- PostgreSQL 16+
+- Docker (for integration tests)
 
-### 1) Install dependencies
+### Installation
 
 ```bash
 cd backend
 pnpm install
-```
-
-### 2) Configure environment
-
-```bash
 cp .env.example .env
-```
-
-Update `.env` values if needed.
-
-### 3) Create DB and run migrations
-
-```bash
 pnpm run db:init
-```
-
-### 4) Start development server
-
-```bash
 pnpm run start:dev
 ```
 
-App URLs:
-- API base: `http://localhost:3000/api/v1`
-- Swagger: `http://localhost:3000/api/docs`
+The API will be available at `http://localhost:3000/api/v1` and Swagger docs at `http://localhost:3000/api/docs`.
 
 ## Environment Variables
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `PORT` | No | `3000` | HTTP port |
-| `NODE_ENV` | Yes | `development` | Environment mode |
-| `DATABASE_HOST` | Yes | `localhost` | PostgreSQL host |
-| `DATABASE_PORT` | Yes | `5432` | PostgreSQL port |
-| `DATABASE_USERNAME` | Yes | `postgres` | PostgreSQL username |
-| `DATABASE_PASSWORD` | Yes | `postgres` | PostgreSQL password |
-| `DATABASE_NAME` | Yes | `auth` | Target database name |
-| `JWT_SECRET_KEY` | Yes | - | JWT signing secret |
-| `JWT_ISSUER` | Yes | - | JWT issuer claim |
-| `JWT_AUDIENCE` | Yes | - | JWT audience claim |
-| `JWT_ACCESS_TOKEN_LIFETIME_MINUTES` | No | `50` | Access token lifetime |
-| `REFRESH_TOKEN_COOKIE_NAME` | No | `refreshToken` | Cookie name for refresh token |
-| `REFRESH_TOKEN_DAYS` | No | `7` | Refresh token expiration in days |
+| Variable | Required | Description |
+|---|---|---|
+| `PORT` | No | HTTP server port (default: `3000`) |
+| `NODE_ENV` | Yes | `development` or `production` |
+| `DATABASE_HOST` | Yes | PostgreSQL hostname |
+| `DATABASE_PORT` | Yes | PostgreSQL port (default: `5432`) |
+| `DATABASE_USERNAME` | Yes | PostgreSQL user |
+| `DATABASE_PASSWORD` | Yes | PostgreSQL password |
+| `DATABASE_NAME` | Yes | Target database name |
+| `JWT_SECRET_KEY` | Yes | Secret key for signing JWT tokens |
+| `JWT_ISSUER` | Yes | JWT issuer identifier |
+| `JWT_AUDIENCE` | Yes | JWT audience identifier |
+| `JWT_ACCESS_TOKEN_LIFETIME_MINUTES` | No | Access token lifetime (default: `50`) |
+| `REFRESH_TOKEN_COOKIE_NAME` | No | Cookie name (default: `refreshToken`) |
+| `REFRESH_TOKEN_DAYS` | No | Refresh token lifetime in days (default: `7`) |
 
-## Database and Migrations
+## Database Setup
 
-This template is migration-first (`synchronize: false`).
-
-Available commands:
+The database follows a **migration-first approach** (`synchronize: false`).
 
 ```bash
-pnpm run db:create
-pnpm run db:migration:run
-pnpm run db:migration:revert
-pnpm run db:migration:generate
-pnpm run db:init
+pnpm run db:create               # Create database
+pnpm run db:migration:run        # Apply pending migrations
+pnpm run db:migration:revert     # Revert last migration
+pnpm run db:migration:generate   # Generate migration from entities
+pnpm run db:init                 # Create DB + apply migrations
 ```
 
-Notes:
-- `db:create` creates `DATABASE_NAME` if it does not exist.
-- The DB user must have permission to create databases.
-- On startup, pending migrations are auto-applied only in development mode.
+On development startup, pending migrations auto-apply. In production, migrations are manual.
 
-## Run and Test Commands
+## Running Tests
 
 ```bash
-pnpm run start:dev          # Dev server with watch mode
-pnpm run build              # Build production artifacts
-pnpm run start:prod         # Run compiled app
-pnpm run lint               # ESLint
-pnpm run test               # Default Jest tests
+pnpm run test               # Run all tests
 pnpm run test:unit          # Unit tests only
-pnpm run test:integration   # Integration tests only (requires Docker)
-pnpm run test:cov           # Coverage
+pnpm run test:integration   # Integration tests (Docker required)
+pnpm run test:cov           # Generate coverage report
+pnpm run test:watch         # Watch mode
 ```
 
-## API Surface
+## Project Structure
 
-Base prefix: `/api/v1`
+```
+backend/
+├── src/
+│   ├── common/
+│   │   ├── auth/           # JWT strategy, guards, decorators
+│   │   ├── domain/         # Base entity and domain primitives
+│   │   └── swagger/        # API documentation setup
+│   ├── database/
+│   │   ├── migrations/     # SQL schema migrations
+│   │   ├── create-database.ts
+│   │   ├── data-source.ts
+│   │   └── typeorm.config.ts
+│   ├── modules/
+│   │   ├── users/          # User auth and profile management
+│   │   ├── payments/       # Payment processing
+│   │   └── (cv-generation) # Upcoming AI CV module
+│   ├── app.module.ts
+│   └── main.ts
+├── tests/
+│   ├── unit-tests/         # Unit test suite
+│   ├── integration/        # Integration tests (Docker)
+│   └── e2e/                # End-to-end tests
+└── package.json
+```
 
-### App
-- `GET /` - Health/welcome message
+## API Documentation
 
-### Auth
-- `POST /auth/register`
-- `POST /auth/login`
-- `POST /auth/refresh-token`
-- `POST /auth/logout`
-- `POST /auth/forget-password`
-- `PUT /auth/reset-password`
-- `GET /auth/me`
+Full API docs (auto-generated): `GET /api/docs`
 
-### Users
-- `POST /users/change-password`
-- `PATCH /users/change-email`
-- `PUT /users/update-profile`
+### Authentication Endpoints
+- `POST /api/v1/auth/register` - Create account
+- `POST /api/v1/auth/login` - Authenticate
+- `POST /api/v1/auth/refresh-token` - Get new access token
+- `POST /api/v1/auth/logout` - End session
+- `POST /api/v1/auth/forget-password` - Request password reset
+- `PUT /api/v1/auth/reset-password` - Complete password reset
+- `GET /api/v1/auth/me` - Get authenticated user
 
-### Payments
-- `POST /payments/checkout`
+### User Profile Endpoints
+- `PATCH /api/v1/users/profile` - Update profile
+- `PATCH /api/v1/users/email` - Change email
+- `PATCH /api/v1/users/password` - Change password
 
-Payment checkout requires:
-- Bearer access token
-- `idempotency-key` header
-- Body: `amount`, `currency`
+### Payment Endpoints
+- `POST /api/v1/payments/checkout` - Create payment checkout
 
-## Production Notes
+### CV Generation (Upcoming)
+- `POST /api/v1/cv/generate` - Generate CV from user data with AI prompt
+- `GET /api/v1/cv/:id/download` - Download generated CV as PDF
+- `GET /api/v1/cv/list` - List user's generated CVs
 
-- Refresh cookies are set with:
-  - `httpOnly: true`
-  - `secure: true`
-  - `sameSite: none`
-- For browser-based clients, run behind HTTPS in production (and typically in staging).
-- Rotate and secure `JWT_SECRET_KEY` using your secret manager.
-- Replace `InMemoryPaymentService` with a real provider implementation.
-- Add rate limiting, audit logging, and email delivery for reset-password flow before go-live.
+## Security Notes
 
-## Customization Guide
+- **Access Token**: Sent in `Authorization: Bearer <token>` header; 50-minute lifetime
+- **Refresh Token**: Stored in HTTP-only secure cookie; 7-day lifetime
+- **Password Storage**: Hashed with bcrypt
+- **Idempotency**: Payment endpoints support `idempotency-key` header to prevent duplicate charges
 
-Typical next steps for teams:
+For production:
+- Store `JWT_SECRET_KEY` in a secure vault (AWS Secrets Manager, Vault, etc.)
+- Ensure HTTPS/TLS on all endpoints
+- Enable CORS with specific allowed origins
+- Implement rate limiting on auth endpoints
+- Add request logging and monitoring
 
-1. Replace payment provider implementation behind `PAYMENT_SERVICE`.
-2. Add your email adapter to send real reset-password links.
-3. Extend `UserEntity` and user profile endpoints for your domain.
-4. Add business modules (appointments, billing, notifications, etc.) using the same feature-handler pattern.
+## Development
 
----
+```bash
+pnpm run lint                # ESLint check
+pnpm run format              # Prettier format
+pnpm run build               # Build for production
+pnpm run start:prod          # Run production build
+pnpm run start:debug         # Debug mode with inspector
+```
 
-If you want a starter that already handles auth + DB + testing structure, this template is built to save that setup time and let you ship features faster.
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## License
+
+See [LICENSE](LICENSE) for details.

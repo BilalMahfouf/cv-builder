@@ -1,45 +1,19 @@
 # Contributing Guide
 
-Thanks for considering contributing to this project.
+Thanks for contributing to the CV Management Platform!
 
-This template exists to save developers from repeating the same backend setup work. Your contribution helps make it faster, safer, and easier for everyone.
+Your contribution helps improve the platform for everyone. This guide explains how to contribute effectively.
 
-## Why Contribute
+## Who Can Contribute
 
-- You help other teams ship faster.
-- You improve real developer experience, not just code.
-- You can fix bugs you personally hit.
-- You can shape the template standards used in future projects.
+- **Backend developers**: Add features, fix bugs, improve tests
+- **DevOps/Infrastructure**: Database, CI/CD, deployment improvements
+- **Documentation**: Improve guides, examples, error messages
+- **Everyone**: Bug reports, feedback, code reviews
 
-## Who Should Contribute
+## Getting Started
 
-Everyone is welcome.
-
-- Beginners can improve docs, examples, and error messages.
-- Backend developers can add features, tests, and refactors.
-- QA-minded contributors can improve reliability and test coverage.
-
-If you found an issue, you are already the right person to help improve it.
-
-## Ground Rules
-
-- Keep changes focused and small.
-- Prefer clear code over clever code.
-- Add or update tests for behavior changes.
-- Do not include secrets or credentials.
-- Be respectful in discussions and reviews.
-
-## Quick Contribution Flow
-
-1. Fork the repository.
-2. Create a branch from main.
-3. Make your change.
-4. Run lint and tests locally.
-5. Open a Pull Request with a clear description.
-
-## Local Setup
-
-From the backend directory:
+### 1. Local Setup
 
 ```bash
 cd backend
@@ -49,55 +23,210 @@ pnpm run db:init
 pnpm run start:dev
 ```
 
-Swagger docs will be available at:
+Verify the setup:
+```bash
+curl http://localhost:3000/api/v1/  # Should return 200
+curl http://localhost:3000/api/docs  # Swagger UI
+```
 
-- http://localhost:3000/api/docs
+### 2. Run Tests Before Making Changes
 
-## Create a Good Branch
+```bash
+pnpm run test:unit        # Quick local tests
+pnpm run test:integration # Docker-backed tests
+pnpm run lint             # Check code style
+```
 
-Use a descriptive branch name:
+## Contribution Workflow
 
-- feat/add-email-provider
-- fix/refresh-token-expiry-check
-- docs/improve-readme-setup
-- test/add-payments-integration-cases
+### Step 1: Create a Branch
 
-## Commit Message Style
+Use descriptive names:
+```
+feat/cv-pdf-generation
+feat/add-payment-provider
+fix/jwt-expiry-validation
+docs/improve-deployment-guide
+test/add-cv-generation-tests
+refactor/simplify-payment-handler
+```
 
-Use short, explicit messages:
+### Step 2: Make Your Changes
 
-- feat: add Stripe payment service adapter
-- fix: handle missing idempotency key in checkout
-- docs: improve environment setup instructions
-- test: add integration test for refresh token rotation
+Follow these principles:
+- **Small, focused changes**: One feature or bug fix per PR
+- **Clear code**: Prefer readability over cleverness
+- **Add tests**: For any behavior change (unit or integration)
+- **No secrets**: Never commit `.env` files or credentials
 
-## Reporting Issues
+### Step 3: Commit Messages
 
-When opening an issue, include:
+Write clear, explicit commit messages:
 
-- What happened
-- What you expected
-- Reproduction steps
-- Logs or screenshots if relevant
-- Environment details (Node version, OS, DB, Docker)
+```
+feat: add PDF export to CV generation
 
-Good issue titles:
+- Implement PDF template for CV data
+- Add cv-generation service method
+- Include unit tests
 
-- "Refresh token rotation fails when session is expired"
-- "db:init fails when database user lacks create privilege"
+fix: validate idempotency key before checkout processing
 
-## Picking an Issue to Fix
+docs: add payment provider integration guide
 
-- Start with small, reproducible bugs.
-- Comment on the issue so others know you are working on it.
-- Ask questions early if requirements are unclear.
+test: add CV generation integration tests with mock AI service
+```
 
-## Pull Request Checklist
+**Format**: `<type>: <description>`
 
-Before opening a PR, run:
+Types: `feat`, `fix`, `docs`, `test`, `refactor`, `style`, `perf`
+
+### Step 4: Test Locally
 
 ```bash
 cd backend
+
+# Code quality
+pnpm run lint
+pnpm run format
+
+# Tests
+pnpm run test:unit
+pnpm run test:integration  # Requires Docker running
+
+# Build check
+pnpm run build
+```
+
+All checks must pass before opening a PR.
+
+### Step 5: Open a Pull Request
+
+Include in the PR description:
+- What problem does this solve?
+- How were changes tested?
+- Any breaking changes?
+- Links to related issues
+
+Example PR title:
+```
+feat: implement AI-powered CV generation with PDF export
+```
+
+Example PR description:
+```
+## What
+Adds ability to generate professional CVs from user profile data using AI prompt.
+
+## How
+- New `cv-generation` module with AI integration
+- PDF export using pdfkit library
+- Idempotent CV regeneration with custom prompts
+
+## Testing
+- Unit tests: 12 new tests, all passing
+- Integration tests: Added 5 integration tests
+- Manual: Tested PDF generation with sample data
+
+## Checklist
+- [x] Code follows project style
+- [x] Tests added/updated
+- [x] No hardcoded secrets
+- [x] Documentation updated
+```
+
+## Issue Reporting
+
+When reporting a bug, provide:
+
+1. **Clear title**: "JWT refresh fails after 10 days" (not "Auth broken")
+2. **Description**: What happened vs. what you expected
+3. **Steps to reproduce**: Clear, step-by-step instructions
+4. **Environment**: Node version, OS, Docker version if relevant
+5. **Logs**: Error messages, stack traces if available
+
+Example issue:
+```
+**Title**: Refresh token fails when session expires mid-flow
+
+**Description**
+When a user is idle for 7+ days (refresh token lifetime), 
+attempting to refresh returns 401 instead of asking them to login.
+
+**Steps**
+1. Create user account
+2. Wait 7 days
+3. Call POST /api/v1/auth/refresh-token
+
+**Expected**
+Clear error message directing to login endpoint
+
+**Actual**
+500 Internal Server Error
+
+**Environment**
+- Node: 20.11.1
+- OS: macOS 14.2
+- DB: PostgreSQL 16 (Docker)
+```
+
+## Code Standards
+
+### Architecture
+
+- **Modular design**: Each feature in its own module/folder
+- **Service abstraction**: Use ports/adapters for external dependencies
+- **Entity-driven**: Domain entities drive feature logic
+- **Error handling**: Custom error classes in `*.errors.ts` files
+
+### Testing
+
+- **Unit tests**: Test business logic in isolation
+- **Integration tests**: Test features end-to-end with real DB
+- **Naming**: `*.spec.ts` for units, `*.integration-spec.ts` for integration
+
+### File Organization
+
+```
+src/modules/feature-name/
+├── entities/
+│   ├── feature.entity.ts
+│   └── feature-status.enum.ts
+├── features/
+│   ├── create-feature.handler.ts
+│   ├── update-feature.handler.ts
+│   └── delete-feature.handler.ts
+├── services/
+│   ├── feature.service.ts
+│   └── external-provider.interface.ts
+├── feature.errors.ts
+└── feature.module.ts
+```
+
+### Database Migrations
+
+When adding database changes:
+
+1. Create a new migration:
+   ```bash
+   pnpm run db:migration:generate src/database/migrations/auto -d src/database/data-source.ts
+   ```
+
+2. Review the generated migration file
+3. Test locally:
+   ```bash
+   pnpm run db:migration:run
+   pnpm run db:migration:revert  # Test rollback
+   pnpm run db:migration:run     # Run again
+   ```
+
+4. Include migration in your PR
+
+## Questions?
+
+- Check [README.md](README.md) for architecture and setup
+- Review existing code patterns in the `src/modules/` directory
+- Open a discussion issue if you need clarification
 pnpm run lint
 pnpm run test:unit
 pnpm run test:integration
