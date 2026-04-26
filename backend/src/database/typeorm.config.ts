@@ -4,6 +4,8 @@ import { DataSourceOptions } from 'typeorm';
 import { PaymentEntity } from '../modules/payments/entities/payment.entity';
 import { UserEntity } from '../modules/users/entities/user.entity';
 import { UserSessionEntity } from '../modules/users/entities/user-session.entity';
+import { CvEntity } from '../modules/cvs/entities/cv.entity';
+import { CvSectionEntity } from '../modules/sections/entities/cv-section.entity';
 
 const parsePort = (value: string | undefined, fallback: number): number => {
   if (!value) {
@@ -23,7 +25,13 @@ export const buildTypeOrmOptions = (
   username: configService.get<string>('DATABASE_USERNAME', 'postgres'),
   password: configService.get<string>('DATABASE_PASSWORD', 'postgres'),
   database: configService.get<string>('DATABASE_NAME', 'auth'),
-  entities: [UserEntity, UserSessionEntity, PaymentEntity],
+  entities: [
+    UserEntity,
+    UserSessionEntity,
+    PaymentEntity,
+    CvEntity,
+    CvSectionEntity,
+  ],
   migrations: ['dist/database/migrations/*.js'],
   migrationsRun: false,
   synchronize: false,
@@ -37,7 +45,13 @@ export const buildDataSourceOptionsFromEnv = (): DataSourceOptions => ({
   username: process.env.DATABASE_USERNAME ?? 'postgres',
   password: process.env.DATABASE_PASSWORD ?? 'postgres',
   database: process.env.DATABASE_NAME ?? 'auth',
-  entities: [UserEntity, UserSessionEntity, PaymentEntity],
+  entities: [
+    UserEntity,
+    UserSessionEntity,
+    PaymentEntity,
+    CvEntity,
+    CvSectionEntity,
+  ],
   migrations: ['src/database/migrations/*.ts'],
   synchronize: false,
   logging: false,

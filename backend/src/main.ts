@@ -28,4 +28,8 @@ async function bootstrap() {
   console.log(`API running on: ${apiUrl} (port ${port})`);
   console.log(`Swagger docs: ${apiUrl}/api/docs`);
 }
-bootstrap();
+
+bootstrap().catch((error: Error) => {
+  console.error('Failed to bootstrap application:', error);
+  process.exit(1);
+});
