@@ -19,6 +19,7 @@ import {
     ApiForbiddenResponse,
     ApiBadRequestResponse,
 } from '@nestjs/swagger';
+import { SWAGGER_BEARER_AUTH_NAME } from '../../../common/swagger/swagger.responses';
 import { CurrentUser } from '../../../common/auth/current-user.decorator';
 import type { CurrentUserContext } from '../../../common/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../../common/auth/jwt-auth.guard';
@@ -31,7 +32,7 @@ import { MoveSectionDto } from '../dto/move-section.dto';
 @Controller('cvs/:cvId/sections')
 @ApiTags('Sections')
 @UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
+@ApiBearerAuth(SWAGGER_BEARER_AUTH_NAME)
 export class SectionsController {
     constructor(private readonly sectionsService: SectionsService) { }
 

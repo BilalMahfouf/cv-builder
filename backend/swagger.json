@@ -1,0 +1,2069 @@
+{
+    "openapi": "3.0.0",
+    "paths": {
+        "/api/v1": {
+            "get": {
+                "description": "Returns a simple welcome message.",
+                "operationId": "AppController_getHello",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Welcome message returned successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string",
+                                    "example": "Hello World!"
+                                }
+                            }
+                        }
+                    }
+                },
+                "summary": "Root welcome endpoint",
+                "tags": [
+                    "App"
+                ]
+            }
+        },
+        "/api/v1/auth/register": {
+            "post": {
+                "description": "Creates a new user account, returns a JWT access token, and sets a refresh token cookie.",
+                "operationId": "RegisterEndpoint_execute",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterCommandDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Account created successfully.",
+                        "headers": {
+                            "Set-Cookie": {
+                                "description": "HttpOnly refresh token cookie.",
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RegisterResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Request body validation failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 400,
+                                        "message": [
+                                            "email must be an email",
+                                            "password must be longer than or equal to 6 characters"
+                                        ],
+                                        "error": "Bad Request"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Email address is already used by another account.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 409,
+                                        "code": "User.EmailAlreadyInUse",
+                                        "message": "Email doctor@example.com is already in use"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected server error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 500,
+                                        "message": "Internal server error"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "summary": "Register account",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/v1/auth/login": {
+            "post": {
+                "description": "Authenticates user credentials, returns a JWT access token, and sets a refresh token cookie.",
+                "operationId": "LoginEndpoint_execute",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginCommandDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Login successful.",
+                        "headers": {
+                            "Set-Cookie": {
+                                "description": "HttpOnly refresh token cookie.",
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LoginResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Request body validation failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 400,
+                                        "message": [
+                                            "email must be an email",
+                                            "password must be longer than or equal to 6 characters"
+                                        ],
+                                        "error": "Bad Request"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Credentials or session token are invalid.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 401,
+                                        "code": "User.InvalidCredentials",
+                                        "message": "The provided credentials are invalid"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No account exists for the supplied email.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 404,
+                                        "code": "User.NotFound",
+                                        "message": "User with email doctor@example.com is not found"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected server error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 500,
+                                        "message": "Internal server error"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "summary": "Login",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/v1/auth/refresh-token": {
+            "post": {
+                "description": "Reads refresh token from cookie, rotates it, and returns a new JWT access token.",
+                "operationId": "RefreshTokenEndpoint_execute",
+                "parameters": [],
+                "responses": {
+                    "201": {
+                        "description": "Access token refreshed successfully.",
+                        "headers": {
+                            "Set-Cookie": {
+                                "description": "Rotated HttpOnly refresh token cookie.",
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RefreshTokenResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Credentials or session token are invalid.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 401,
+                                        "code": "User.InvalidCredentials",
+                                        "message": "The provided credentials are invalid"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Refresh session has expired and user must login again.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 409,
+                                        "code": "User.ExpiredRefreshToken",
+                                        "message": "Refresh Token is expired, please login again"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected server error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 500,
+                                        "message": "Internal server error"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "refresh-token-cookie": []
+                    }
+                ],
+                "summary": "Refresh access token",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "description": "Invalidates refresh session and clears refresh token cookie.",
+                "operationId": "LogoutEndpoint_execute",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Logout successful. Response body is empty.",
+                        "headers": {
+                            "Set-Cookie": {
+                                "description": "Clears the refresh token cookie.",
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Credentials or session token are invalid.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 401,
+                                        "code": "User.InvalidCredentials",
+                                        "message": "The provided credentials are invalid"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected server error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 500,
+                                        "message": "Internal server error"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "refresh-token-cookie": []
+                    }
+                ],
+                "summary": "Logout",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/v1/auth/forget-password": {
+            "post": {
+                "description": "Creates a short-lived reset session token for the provided user email.",
+                "operationId": "ForgetPasswordEndpoint_execute",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ForgetPasswordCommandDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "Reset flow created successfully. Response body is empty."
+                    },
+                    "400": {
+                        "description": "Request body validation failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 400,
+                                        "message": [
+                                            "email must be an email",
+                                            "password must be longer than or equal to 6 characters"
+                                        ],
+                                        "error": "Bad Request"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No account exists for the supplied email.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 404,
+                                        "code": "User.NotFound",
+                                        "message": "User with email doctor@example.com is not found"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected server error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 500,
+                                        "message": "Internal server error"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "summary": "Start password reset",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/v1/auth/reset-password": {
+            "put": {
+                "description": "Validates reset token and updates password for the matching user account.",
+                "operationId": "ResetPasswordEndpoint_execute",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResetPasswordCommandDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset successful. Response body is empty."
+                    },
+                    "400": {
+                        "description": "Request body validation failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 400,
+                                        "message": [
+                                            "email must be an email",
+                                            "password must be longer than or equal to 6 characters"
+                                        ],
+                                        "error": "Bad Request"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Credentials or session token are invalid.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 401,
+                                        "code": "User.InvalidCredentials",
+                                        "message": "The provided credentials are invalid"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No account exists for the supplied email.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 404,
+                                        "code": "User.NotFound",
+                                        "message": "User with email doctor@example.com is not found"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Password does not match policy or confirmation rules.\n\nPassword must be at least 6 characters long.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 409,
+                                        "code": "User.InvalidPasswordLength",
+                                        "message": "Password must be at least 6 characters long"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected server error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 500,
+                                        "message": "Internal server error"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "summary": "Reset password",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "description": "Returns profile information for the authenticated user.",
+                "operationId": "MeEndpoint_execute",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Current user profile returned successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MeResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Credentials or session token are invalid.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 401,
+                                        "code": "User.InvalidCredentials",
+                                        "message": "The provided credentials are invalid"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No account exists for the authenticated user id.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 404,
+                                        "code": "User.NotFound",
+                                        "message": "User with id 41d2f0f8-b4ce-4f11-8c6f-7fdd2b63e4b6 is not found"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected server error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 500,
+                                        "message": "Internal server error"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "access-token": []
+                    }
+                ],
+                "summary": "Get current user",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/v1/users/change-password": {
+            "post": {
+                "description": "Updates the authenticated user password.",
+                "operationId": "ChangePasswordEndpoint_execute",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangePasswordCommandDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password changed successfully. Response body is empty."
+                    },
+                    "400": {
+                        "description": "Request body validation failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 400,
+                                        "message": [
+                                            "email must be an email",
+                                            "password must be longer than or equal to 6 characters"
+                                        ],
+                                        "error": "Bad Request"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Credentials or session token are invalid.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 401,
+                                        "code": "User.InvalidCredentials",
+                                        "message": "The provided credentials are invalid"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No account exists for the authenticated user.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 404,
+                                        "code": "User.NotFound",
+                                        "message": "User is not found"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Password does not match policy or confirmation rules.\n\nPassword must be at least 6 characters long.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 409,
+                                        "code": "User.InvalidPasswordLength",
+                                        "message": "Password must be at least 6 characters long"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected server error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 500,
+                                        "message": "Internal server error"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "access-token": []
+                    }
+                ],
+                "summary": "Change password",
+                "tags": [
+                    "Users"
+                ]
+            }
+        },
+        "/api/v1/users/change-email": {
+            "patch": {
+                "description": "Updates the authenticated user email address.",
+                "operationId": "ChangeEmailEndpoint_execute",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangeEmailCommandDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "Email changed successfully. Response body is empty."
+                    },
+                    "400": {
+                        "description": "Request body validation failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 400,
+                                        "message": [
+                                            "email must be an email",
+                                            "password must be longer than or equal to 6 characters"
+                                        ],
+                                        "error": "Bad Request"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Credentials or session token are invalid.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 401,
+                                        "code": "User.InvalidCredentials",
+                                        "message": "The provided credentials are invalid"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No account exists for the supplied email.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 404,
+                                        "code": "User.NotFound",
+                                        "message": "User with email doctor@example.com is not found"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Email address is already used by another account.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 409,
+                                        "code": "User.EmailAlreadyInUse",
+                                        "message": "Email doctor@example.com is already in use"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected server error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 500,
+                                        "message": "Internal server error"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "access-token": []
+                    }
+                ],
+                "summary": "Change email",
+                "tags": [
+                    "Users"
+                ]
+            }
+        },
+        "/api/v1/users/update-profile": {
+            "put": {
+                "description": "Updates username for the authenticated user.",
+                "operationId": "UpdateUserProfileEndpoint_execute",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateUserProfileCommandDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "Profile updated successfully. Response body is empty."
+                    },
+                    "400": {
+                        "description": "Request body validation failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 400,
+                                        "message": [
+                                            "email must be an email",
+                                            "password must be longer than or equal to 6 characters"
+                                        ],
+                                        "error": "Bad Request"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Credentials or session token are invalid.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 401,
+                                        "code": "User.InvalidCredentials",
+                                        "message": "The provided credentials are invalid"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No account exists for the authenticated user.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 404,
+                                        "code": "User.NotFound",
+                                        "message": "User is not found"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected server error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 500,
+                                        "message": "Internal server error"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "access-token": []
+                    }
+                ],
+                "summary": "Update profile",
+                "tags": [
+                    "Users"
+                ]
+            }
+        },
+        "/api/v1/payments/checkout": {
+            "post": {
+                "description": "Method: POST. Path: /api/v1/payments/checkout. Headers: Authorization: Bearer <access-token>, idempotency-key: <unique-key>. Body: amount (positive number, max 2 decimals), currency (3-letter ISO code). Side effects: creates a pending payment row in the database and calls the configured payment service abstraction for checkout processing.",
+                "operationId": "CreateCheckoutEndpoint_execute",
+                "parameters": [
+                    {
+                        "name": "idempotency-key",
+                        "required": true,
+                        "in": "header",
+                        "description": "Client-generated unique key used to enforce request idempotency.",
+                        "schema": {
+                            "type": "string",
+                            "example": "checkout-3d4fe68b-0c0e-4de8-95cf-85f71bd27f23"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateCheckoutCommandDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Checkout payment created successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CreateCheckoutResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Request body validation failed.\n\nInvalid request body or missing idempotency-key header.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 400,
+                                        "code": "Payment.IdempotencyKeyRequired",
+                                        "message": "idempotency-key header is required"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid JWT access token.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 401,
+                                        "code": "User.InvalidCredentials",
+                                        "message": "The provided credentials are invalid"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authenticated user is not allowed by policy to create checkout.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 403,
+                                        "message": "Forbidden resource"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authenticated user does not exist anymore.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 404,
+                                        "code": "Payment.UserNotFound",
+                                        "message": "User with id 41d2f0f8-b4ce-4f11-8c6f-7fdd2b63e4b6 is not found"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected server error.\n\nProvider processing or unexpected internal failure.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "example": {
+                                        "statusCode": 500,
+                                        "code": "Payment.ProviderProcessFailed",
+                                        "message": "Unable to process payment with provider"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "access-token": []
+                    }
+                ],
+                "summary": "Create checkout payment",
+                "tags": [
+                    "Payments"
+                ]
+            }
+        },
+        "/api/v1/cvs/public/{slug}": {
+            "get": {
+                "description": "Retrieve a CV using its public slug. No authentication required.",
+                "operationId": "CvsController_getPublicBySlug",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "CV retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CvEntity"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "CV with this slug not found"
+                    }
+                },
+                "summary": "Get CV by public slug",
+                "tags": [
+                    "CVs"
+                ]
+            }
+        },
+        "/api/v1/cvs": {
+            "post": {
+                "description": "Create a new CV for the authenticated user. Slug is auto-generated.",
+                "operationId": "CvsController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateCvDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "CV created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CvEntity"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body"
+                    }
+                },
+                "security": [
+                    {
+                        "access-token": []
+                    }
+                ],
+                "summary": "Create a new CV",
+                "tags": [
+                    "CVs"
+                ]
+            },
+            "get": {
+                "description": "Retrieve all CVs belonging to the authenticated user.",
+                "operationId": "CvsController_findAll",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "CVs retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CvEntity"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "access-token": []
+                    }
+                ],
+                "summary": "List all CVs",
+                "tags": [
+                    "CVs"
+                ]
+            }
+        },
+        "/api/v1/cvs/guest-save": {
+            "post": {
+                "description": "Atomically create a CV and all its sections from a sessionStorage payload. Both CV and sections are persisted in a single transaction.",
+                "operationId": "CvsController_guestSave",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SaveGuestCvDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "CV and sections saved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CvEntity"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid CV or section payload"
+                    }
+                },
+                "security": [
+                    {
+                        "access-token": []
+                    }
+                ],
+                "summary": "Save CV from guest session",
+                "tags": [
+                    "CVs"
+                ]
+            }
+        },
+        "/api/v1/cvs/{id}": {
+            "get": {
+                "description": "Retrieve a specific CV by its ID. User must own the CV.",
+                "operationId": "CvsController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "CV retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CvEntity"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "You do not own this CV"
+                    },
+                    "404": {
+                        "description": "CV not found"
+                    }
+                },
+                "security": [
+                    {
+                        "access-token": []
+                    }
+                ],
+                "summary": "Get CV by ID",
+                "tags": [
+                    "CVs"
+                ]
+            },
+            "patch": {
+                "description": "Update the title of a CV. User must own the CV.",
+                "operationId": "CvsController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCvDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "CV updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CvEntity"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body"
+                    },
+                    "403": {
+                        "description": "You do not own this CV"
+                    },
+                    "404": {
+                        "description": "CV not found"
+                    }
+                },
+                "security": [
+                    {
+                        "access-token": []
+                    }
+                ],
+                "summary": "Update CV",
+                "tags": [
+                    "CVs"
+                ]
+            },
+            "delete": {
+                "description": "Delete a CV and all its sections. User must own the CV.",
+                "operationId": "CvsController_remove",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "403": {
+                        "description": "You do not own this CV"
+                    },
+                    "404": {
+                        "description": "CV not found"
+                    }
+                },
+                "security": [
+                    {
+                        "access-token": []
+                    }
+                ],
+                "summary": "Delete CV",
+                "tags": [
+                    "CVs"
+                ]
+            }
+        },
+        "/api/v1/cvs/{cvId}/sections": {
+            "get": {
+                "description": "Retrieve all sections for a specific CV, sorted by order index.",
+                "operationId": "SectionsController_list",
+                "parameters": [
+                    {
+                        "name": "cvId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sections retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CvSectionEntity"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "You do not own this CV"
+                    },
+                    "404": {
+                        "description": "CV not found or not owned by user"
+                    }
+                },
+                "security": [
+                    {
+                        "access-token": []
+                    }
+                ],
+                "summary": "List sections in a CV",
+                "tags": [
+                    "Sections"
+                ]
+            },
+            "post": {
+                "description": "Create a new section within a CV. Order index is auto-assigned.",
+                "operationId": "SectionsController_create",
+                "parameters": [
+                    {
+                        "name": "cvId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateSectionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Section created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CvSectionEntity"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body"
+                    },
+                    "403": {
+                        "description": "You do not own this CV"
+                    },
+                    "404": {
+                        "description": "CV not found or not owned by user"
+                    }
+                },
+                "security": [
+                    {
+                        "access-token": []
+                    }
+                ],
+                "summary": "Create a section",
+                "tags": [
+                    "Sections"
+                ]
+            }
+        },
+        "/api/v1/cvs/{cvId}/sections/{id}": {
+            "get": {
+                "description": "Retrieve a specific section by its ID.",
+                "operationId": "SectionsController_findOne",
+                "parameters": [
+                    {
+                        "name": "cvId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Section retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CvSectionEntity"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "You do not own this CV"
+                    },
+                    "404": {
+                        "description": "Section or CV not found"
+                    }
+                },
+                "security": [
+                    {
+                        "access-token": []
+                    }
+                ],
+                "summary": "Get a section",
+                "tags": [
+                    "Sections"
+                ]
+            },
+            "patch": {
+                "description": "Update the content of a section.",
+                "operationId": "SectionsController_update",
+                "parameters": [
+                    {
+                        "name": "cvId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateSectionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Section updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CvSectionEntity"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body"
+                    },
+                    "403": {
+                        "description": "You do not own this CV"
+                    },
+                    "404": {
+                        "description": "Section or CV not found"
+                    }
+                },
+                "security": [
+                    {
+                        "access-token": []
+                    }
+                ],
+                "summary": "Update a section",
+                "tags": [
+                    "Sections"
+                ]
+            },
+            "delete": {
+                "description": "Delete a section. Subsequent sections are reindexed automatically.",
+                "operationId": "SectionsController_remove",
+                "parameters": [
+                    {
+                        "name": "cvId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "403": {
+                        "description": "You do not own this CV"
+                    },
+                    "404": {
+                        "description": "Section or CV not found"
+                    }
+                },
+                "security": [
+                    {
+                        "access-token": []
+                    }
+                ],
+                "summary": "Delete a section",
+                "tags": [
+                    "Sections"
+                ]
+            }
+        },
+        "/api/v1/cvs/{cvId}/sections/{id}/move": {
+            "post": {
+                "description": "Move a section up or down within the CV by swapping with its neighbor.",
+                "operationId": "SectionsController_move",
+                "parameters": [
+                    {
+                        "name": "cvId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MoveSectionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Section moved successfully; returns both swapped sections",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CvSectionEntity"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Cannot move (already first/last section) or invalid direction"
+                    },
+                    "403": {
+                        "description": "You do not own this CV"
+                    },
+                    "404": {
+                        "description": "Section or CV not found"
+                    }
+                },
+                "security": [
+                    {
+                        "access-token": []
+                    }
+                ],
+                "summary": "Move a section",
+                "tags": [
+                    "Sections"
+                ]
+            }
+        }
+    },
+    "info": {
+        "title": "CV Builder API",
+        "description": "API documentation for authentication and user profile management.",
+        "version": "1.0.0",
+        "contact": {}
+    },
+    "tags": [],
+    "servers": [],
+    "components": {
+        "securitySchemes": {
+            "access-token": {
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "type": "http",
+                "description": "JWT access token sent in Authorization header."
+            },
+            "refresh-token-cookie": {
+                "type": "apiKey",
+                "in": "cookie",
+                "name": "refreshToken",
+                "description": "Refresh token cookie generated by login/register endpoints."
+            }
+        },
+        "schemas": {
+            "RegisterCommandDto": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "example": "doctor@example.com"
+                    },
+                    "password": {
+                        "type": "string",
+                        "example": "Secret123",
+                        "minLength": 6
+                    },
+                    "userName": {
+                        "type": "string",
+                        "example": "drhouse"
+                    }
+                },
+                "required": [
+                    "email",
+                    "password",
+                    "userName"
+                ]
+            },
+            "RegisterResponseDto": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "example": "<jwt-access-token>",
+                        "description": "JWT access token for Authorization header."
+                    }
+                },
+                "required": [
+                    "token"
+                ]
+            },
+            "LoginCommandDto": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "example": "doctor@example.com"
+                    },
+                    "password": {
+                        "type": "string",
+                        "example": "Secret123",
+                        "minLength": 6
+                    }
+                },
+                "required": [
+                    "email",
+                    "password"
+                ]
+            },
+            "LoginResponseDto": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "example": "<jwt-access-token>",
+                        "description": "JWT access token for Authorization header."
+                    }
+                },
+                "required": [
+                    "token"
+                ]
+            },
+            "RefreshTokenResponseDto": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "example": "<jwt-access-token>",
+                        "description": "New JWT access token for Authorization header."
+                    }
+                },
+                "required": [
+                    "token"
+                ]
+            },
+            "ForgetPasswordCommandDto": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "example": "doctor@example.com"
+                    },
+                    "clientUri": {
+                        "type": "string",
+                        "example": "https://app.example.com/reset-password",
+                        "description": "Client reset-password route used when generating email links."
+                    }
+                },
+                "required": [
+                    "email",
+                    "clientUri"
+                ]
+            },
+            "ResetPasswordCommandDto": {
+                "type": "object",
+                "properties": {
+                    "password": {
+                        "type": "string",
+                        "example": "NewPassword123",
+                        "minLength": 6
+                    },
+                    "confirmPassword": {
+                        "type": "string",
+                        "example": "NewPassword123",
+                        "minLength": 6
+                    },
+                    "token": {
+                        "type": "string",
+                        "example": "<reset-token-from-email-link>"
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "doctor@example.com"
+                    }
+                },
+                "required": [
+                    "password",
+                    "confirmPassword",
+                    "token",
+                    "email"
+                ]
+            },
+            "MeResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "example": "41d2f0f8-b4ce-4f11-8c6f-7fdd2b63e4b6"
+                    },
+                    "userName": {
+                        "type": "string",
+                        "example": "drhouse"
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "doctor@example.com"
+                    },
+                    "role": {
+                        "type": "string",
+                        "example": "Doctor"
+                    },
+                    "isActive": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "clinicInfromationCompleted": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "subscriptionStatus": {
+                        "type": "object",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "isSubscriptionExist": {
+                        "type": "object",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "createdOnUtc": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-04-21T10:00:00.000Z"
+                    }
+                },
+                "required": [
+                    "id",
+                    "userName",
+                    "email",
+                    "role",
+                    "isActive",
+                    "clinicInfromationCompleted",
+                    "subscriptionStatus",
+                    "isSubscriptionExist",
+                    "createdOnUtc"
+                ]
+            },
+            "ChangePasswordCommandDto": {
+                "type": "object",
+                "properties": {
+                    "currentPassword": {
+                        "type": "string",
+                        "example": "CurrentPassword123"
+                    },
+                    "newPassword": {
+                        "type": "string",
+                        "example": "NewPassword123",
+                        "minLength": 6
+                    },
+                    "confirmNewPassword": {
+                        "type": "string",
+                        "example": "NewPassword123",
+                        "minLength": 6
+                    }
+                },
+                "required": [
+                    "currentPassword",
+                    "newPassword",
+                    "confirmNewPassword"
+                ]
+            },
+            "ChangeEmailCommandDto": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "example": "new-email@example.com"
+                    }
+                },
+                "required": [
+                    "email"
+                ]
+            },
+            "UpdateUserProfileCommandDto": {
+                "type": "object",
+                "properties": {
+                    "userName": {
+                        "type": "string",
+                        "example": "drhouse"
+                    }
+                },
+                "required": [
+                    "userName"
+                ]
+            },
+            "CreateCheckoutCommandDto": {
+                "type": "object",
+                "properties": {
+                    "amount": {
+                        "type": "number",
+                        "example": 59.99,
+                        "minimum": 0.01,
+                        "description": "Payment amount to process for checkout."
+                    },
+                    "currency": {
+                        "type": "string",
+                        "example": "USD",
+                        "description": "ISO 4217 currency code in 3 uppercase letters."
+                    }
+                },
+                "required": [
+                    "amount",
+                    "currency"
+                ]
+            },
+            "CreateCheckoutResponseDto": {
+                "type": "object",
+                "properties": {
+                    "paymentId": {
+                        "type": "string",
+                        "example": "0aa41a44-aec1-4c53-b07a-8fcb13d92d44"
+                    },
+                    "status": {
+                        "type": "number",
+                        "example": "Pending",
+                        "enum": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5
+                        ]
+                    },
+                    "provider": {
+                        "type": "string",
+                        "example": "InMemoryProvider"
+                    },
+                    "providerPaymentId": {
+                        "type": "string",
+                        "example": "in-memory-ef0b78a7-33ab-45ca-bf1e-77a052ecf1ea"
+                    },
+                    "idempotencyKey": {
+                        "type": "string",
+                        "example": "e0ee0f8c-3e66-4f8f-8f53-8787f3526ccf"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "example": 59.99
+                    },
+                    "currency": {
+                        "type": "string",
+                        "example": "USD"
+                    },
+                    "checkoutUri": {
+                        "type": "object",
+                        "example": "https://checkout.in-memory.local/payments/in-memory-ef0b78a7-33ab-45ca-bf1e-77a052ecf1ea",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "paymentId",
+                    "status",
+                    "provider",
+                    "providerPaymentId",
+                    "idempotencyKey",
+                    "amount",
+                    "currency"
+                ]
+            },
+            "CvEntity": {
+                "type": "object",
+                "properties": {}
+            },
+            "CreateCvDto": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "example": "My Professional CV",
+                        "minLength": 1,
+                        "maxLength": 150
+                    }
+                }
+            },
+            "SaveGuestSectionItemDto": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "example": "PERSONAL_INFO",
+                        "enum": [
+                            "PERSONAL_INFO",
+                            "EXPERIENCE",
+                            "EDUCATION",
+                            "SKILLS",
+                            "PROJECTS",
+                            "LANGUAGES",
+                            "CERTIFICATIONS",
+                            "CUSTOM"
+                        ]
+                    },
+                    "orderIndex": {
+                        "type": "number",
+                        "example": 0,
+                        "minimum": 0
+                    },
+                    "content": {
+                        "type": "object",
+                        "example": {
+                            "fullName": "John Doe",
+                            "headline": "Software Engineer"
+                        }
+                    }
+                },
+                "required": [
+                    "type",
+                    "orderIndex",
+                    "content"
+                ]
+            },
+            "SaveGuestCvDto": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "example": "My CV from sessionStorage",
+                        "minLength": 1,
+                        "maxLength": 150
+                    },
+                    "sections": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SaveGuestSectionItemDto"
+                        }
+                    }
+                },
+                "required": [
+                    "sections"
+                ]
+            },
+            "UpdateCvDto": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "example": "My Updated CV Title",
+                        "minLength": 1,
+                        "maxLength": 150
+                    }
+                },
+                "required": [
+                    "title"
+                ]
+            },
+            "CvSectionEntity": {
+                "type": "object",
+                "properties": {}
+            },
+            "CreateSectionDto": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "example": "PERSONAL_INFO",
+                        "enum": [
+                            "PERSONAL_INFO",
+                            "EXPERIENCE",
+                            "EDUCATION",
+                            "SKILLS",
+                            "PROJECTS",
+                            "LANGUAGES",
+                            "CERTIFICATIONS",
+                            "CUSTOM"
+                        ]
+                    },
+                    "content": {
+                        "type": "object",
+                        "example": {
+                            "fullName": "John Doe",
+                            "headline": "Software Engineer"
+                        }
+                    }
+                },
+                "required": [
+                    "type",
+                    "content"
+                ]
+            },
+            "UpdateSectionDto": {
+                "type": "object",
+                "properties": {
+                    "content": {
+                        "type": "object",
+                        "example": {
+                            "fullName": "Jane Doe",
+                            "headline": "Senior Engineer"
+                        }
+                    }
+                },
+                "required": [
+                    "content"
+                ]
+            },
+            "MoveSectionDto": {
+                "type": "object",
+                "properties": {
+                    "direction": {
+                        "type": "string",
+                        "example": "up",
+                        "enum": [
+                            "up",
+                            "down"
+                        ]
+                    }
+                },
+                "required": [
+                    "direction"
+                ]
+            }
+        }
+    }
+}
